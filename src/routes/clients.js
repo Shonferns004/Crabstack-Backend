@@ -1,0 +1,33 @@
+import { Router } from 'express'
+import { supabase } from '../config/supabase.js'
+import { authenticate } from '../middleware/auth.js'
+
+const router = Router()
+
+router.get('/', async (_, res) => {
+  const { data, error } = await supabase.from('clients').select('*').order('sort_order')
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
+
+router.post('/', authenticate, async (req, res) => {
+  const { name, logo_url, description, website, project_history, sort_order } = req.body
+  const { data, error } = await supabase.from('clients').insert({ name, logo_url, description, website, project_history, sort_order }).select().single()
+  if (error) return res.status(500).json({ error: error.message })
+  res.status(201).json(data)
+})
+
+router.put('/:id', authenticate, async (req, res) => {
+  const { name, logo_url, description, website, project_history, sort_order } = req.body
+  const { data, error } = await supabase.from('clients').update({ name, logo_url, description, website, project_history, sort_order }).eq('id', req.params.id).select().single()
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
+
+router.delete('/:id', authenticate, async (req, res) => {
+  const { error } = await supabase.from('clients').delete().eq('id', req.params.id)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ success: true })
+})
+
+export default router
