@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import session from 'express-session'
+import cron from 'node-cron'
+import { supabase } from './config/supabase.js'
 dotenv.config()
 
 import authRoutes from './routes/auth.js'
@@ -69,7 +71,24 @@ app.use('/api/activity', activityRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/upload', uploadRoutes)
 
-app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
+app.get('/api/health', async (_, res) => {
+  try {
+    const { count, error } = await supabase.from('projects').select('*', { count: 'exact', head: true })
+    res.json({ status: 'ok', projects: count || 0, timestamp: new Date().toISOString() })
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message })
+  }
+})
+
+cron.schedule('*/9 * * * *', async () => {
+  try {
+    const res = await fetch(`http://localhost:${PORT}/api/health`)
+    const data = await res.json()
+    console.log(`[Health Cron] ${data.status} — ${data.projects} projects — ${data.timestamp}`)
+  } catch (err) {
+    console.error('[Health Cron] Failed:', err.message)
+  }
+})
 
 app.listen(PORT, () => {
   console.log(`Crabstack backend running on http://localhost:${PORT}`)
