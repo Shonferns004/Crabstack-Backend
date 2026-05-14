@@ -29,14 +29,7 @@ import uploadRoutes from './routes/upload.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(s => s.trim().replace(/\/$/, ''))
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
-    cb(null, true)
-  },
-  credentials: true,
-}))
+app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(session({
   secret: process.env.SESSION_SECRET || 'crabstack-session-secret',
