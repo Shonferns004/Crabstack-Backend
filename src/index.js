@@ -22,6 +22,10 @@ import settingsRoutes from './routes/settings.js'
 import activityRoutes from './routes/activity.js'
 import userRoutes from './routes/users.js'
 import uploadRoutes from './routes/upload.js'
+import groqKeyRoutes from './routes/groqKeys.js'
+import leadRoutes from './routes/leads.js'
+import campaignRoutes from './routes/campaigns.js'
+import { startCampaignScheduler } from './services/campaignScheduler.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -54,9 +58,13 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/activity', activityRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/groq-keys', groqKeyRoutes)
+app.use('/api/leads', leadRoutes)
+app.use('/api/campaigns', campaignRoutes)
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
 
 app.listen(PORT, () => {
   console.log(`Crabstack backend running on http://localhost:${PORT}`)
+  startCampaignScheduler()
 })
