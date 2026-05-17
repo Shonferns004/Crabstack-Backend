@@ -165,6 +165,103 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS groq_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  batch_id UUID NOT NULL,
+  name TEXT,
+  type TEXT,
+  industry TEXT,
+  location TEXT,
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+  linkedin TEXT,
+  size TEXT,
+  founded TEXT,
+  revenue_estimate TEXT,
+  decision_maker TEXT,
+  social_presence TEXT,
+  description TEXT,
+  pain_points TEXT[],
+  tech_stack TEXT[],
+  fit_score INT,
+  intent_score INT,
+  reach_score INT,
+  priority TEXT,
+  reason TEXT,
+  outreach_subject TEXT,
+  outreach_body TEXT,
+  context JSONB,
+  created_by TEXT,
+  status TEXT DEFAULT 'new',
+  follow_up_date DATE,
+  deleted BOOLEAN DEFAULT false,
+  deleted_at TIMESTAMPTZ,
+  source TEXT DEFAULT 'manual',
+  email_normalized TEXT,
+  email_verified BOOLEAN DEFAULT false,
+  email_format_valid BOOLEAN DEFAULT false,
+  email_domain_exists BOOLEAN DEFAULT false,
+  email_mx_valid BOOLEAN DEFAULT false,
+  phone_e164 TEXT,
+  phone_verified BOOLEAN DEFAULT false,
+  phone_e164_valid BOOLEAN DEFAULT false,
+  contact_status TEXT DEFAULT 'unverified',
+  dedup_key TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS leads_dedup_key_unique ON leads (dedup_key);
+
+CREATE TABLE IF NOT EXISTS campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  description TEXT,
+  cron_expression TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  payload JSONB DEFAULT '{}'::jsonb,
+  last_run_at TIMESTAMPTZ,
+  next_run_at TIMESTAMPTZ,
+  last_status TEXT,
+  created_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS campaign_runs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID REFERENCES campaigns(id) ON DELETE CASCADE,
+  trigger_source TEXT,
+  status TEXT NOT NULL,
+  started_at TIMESTAMPTZ DEFAULT now(),
+  finished_at TIMESTAMPTZ,
+  output JSONB,
+  error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS lead_automation_settings (
+  id TEXT PRIMARY KEY,
+  enabled BOOLEAN DEFAULT false,
+  weekly_target INT DEFAULT 15,
+  location TEXT,
+  industry TEXT,
+  product TEXT,
+  lead_types JSONB DEFAULT '["startup","local","individual"]'::jsonb,
+  key_id UUID,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+INSERT INTO lead_automation_settings (id, enabled, weekly_target, location, industry, product, lead_types)
+VALUES ('default', false, 15, 'Mumbai, India', 'general business', 'our services', '["startup","local","individual"]'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
 -- Seed default settings
 INSERT INTO settings (key, value) VALUES
   ('site_title', 'Crabstack'),
