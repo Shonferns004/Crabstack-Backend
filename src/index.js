@@ -25,7 +25,6 @@ import uploadRoutes from './routes/upload.js'
 import groqKeyRoutes from './routes/groqKeys.js'
 import leadRoutes from './routes/leads.js'
 import campaignRoutes from './routes/campaigns.js'
-import { startCampaignScheduler } from './services/campaignScheduler.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -66,5 +65,4 @@ app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
 
 app.listen(PORT, () => {
   console.log(`Crabstack backend running on http://localhost:${PORT}`)
-  startCampaignScheduler()
 })

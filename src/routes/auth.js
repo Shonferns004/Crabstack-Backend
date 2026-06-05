@@ -1,8 +1,18 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
+import { supabase } from '../config/supabase.js'
 
 const router = Router()
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
+
+const admins = [
+  { username: process.env.ADMIN1_USERNAME || process.env.ADMIN_USERNAME || 'admin1', password: process.env.ADMIN1_PASSWORD || process.env.ADMIN_PASSWORD },
+  { username: process.env.ADMIN2_USERNAME, password: process.env.ADMIN2_PASSWORD },
+  { username: process.env.ADMIN3_USERNAME, password: process.env.ADMIN3_PASSWORD },
+].filter(a => a.username && a.password)
 
 router.post('/login', async (req, res) => {
   try {
@@ -11,24 +21,20 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password required' })
     }
 
-    const adminUser = process.env.ADMIN_USERNAME || 'admin'
-    const adminPass = process.env.ADMIN_PASSWORD
-
-    if (!adminPass) {
-      return res.status(500).json({ error: 'Admin password not configured' })
-    }
-
-    if (username !== adminUser || password !== adminPass) {
-      return res.status(401).json({ error: 'Invalid credentials' })
-    }
+    const admin = admins.find(a => a.username === username && a.password === password)
+    if (!admin) return res.status(401).json({ error: 'Invalid credentials' })
 
     const token = jwt.sign(
-      { id: 'admin', username: adminUser, role: 'admin' },
+      { id: admin.username, username: admin.username, role: 'admin' },
       JWT_SECRET,
       { expiresIn: '24h' }
     )
 
-    res.json({ token, user: { id: 'admin', username: adminUser, role: 'admin' } })
+    supabase.from('activity_log').insert({
+      user_id: admin.username, action: 'login', entity_type: 'auth', entity_id: admin.username
+    }).then().catch(() => {})
+
+    res.json({ token, user: { id: admin.username, username: admin.username, role: 'admin' } })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

@@ -13,7 +13,7 @@ router.get('/', authenticate, async (req, res) => {
 
   let query = supabase
     .from('activity_log')
-    .select('*, users!activity_log_user_id_fkey(username, role)', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
