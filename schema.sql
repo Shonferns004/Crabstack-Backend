@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS project_images (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   image_url TEXT NOT NULL,
-  device_type TEXT NOT NULL DEFAULT 'website' CHECK (device_type IN ('mobile', 'website')),
+  device_type TEXT NOT NULL DEFAULT 'website' CHECK (device_type IN ('mobile', 'website', 'poster', 'event')),
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
