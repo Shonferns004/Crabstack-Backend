@@ -278,6 +278,8 @@ router.post('/', authenticate, async (req, res) => {
   await logActivity(req.user.id, 'create', 'lead', data.id)
   res.status(201).json(data)
 })
+
+router.get('/', authenticate, async (_req, res) => {
   try {
     await ensureLeadsTable()
   } catch (err) {
