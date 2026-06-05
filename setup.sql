@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS projects (
   image_url TEXT,
   tags TEXT[],
   client_name TEXT,
+  preview_link TEXT,
+  github_repo TEXT,
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );

@@ -17,16 +17,16 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/', authenticate, async (req, res) => {
-  const { title, description, image_url, tags, client_name, sort_order } = req.body
-  const { data, error } = await supabase.from('projects').insert({ title, description, image_url, tags, client_name, sort_order }).select().single()
+  const { title, description, image_url, tags, client_name, preview_link, github_repo, sort_order } = req.body
+  const { data, error } = await supabase.from('projects').insert({ title, description, image_url, tags, client_name, preview_link, github_repo, sort_order }).select().single()
   if (error) return res.status(500).json({ error: error.message })
   await logActivity(req.user.id, 'create', 'project', data.id)
   res.status(201).json(data)
 })
 
 router.put('/:id', authenticate, async (req, res) => {
-  const { title, description, image_url, tags, client_name, sort_order } = req.body
-  const { data, error } = await supabase.from('projects').update({ title, description, image_url, tags, client_name, sort_order }).eq('id', req.params.id).select().single()
+  const { title, description, image_url, tags, client_name, preview_link, github_repo, sort_order } = req.body
+  const { data, error } = await supabase.from('projects').update({ title, description, image_url, tags, client_name, preview_link, github_repo, sort_order }).eq('id', req.params.id).select().single()
   if (error) return res.status(500).json({ error: error.message })
   await logActivity(req.user.id, 'update', 'project', req.params.id)
   res.json(data)
