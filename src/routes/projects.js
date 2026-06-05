@@ -49,6 +49,7 @@ router.post('/:id/images', authenticate, async (req, res) => {
   const { image_url, device_type, sort_order } = req.body
   const { data, error } = await supabase.from('project_images').insert({ project_id: req.params.id, image_url, device_type, sort_order }).select().single()
   if (error) return res.status(500).json({ error: error.message })
+  await logActivity(req.user.id, 'create', 'project_image', data.id)
   res.status(201).json(data)
 })
 
@@ -56,12 +57,14 @@ router.put('/:id/images/:imageId', authenticate, async (req, res) => {
   const { device_type, sort_order } = req.body
   const { data, error } = await supabase.from('project_images').update({ device_type, sort_order }).eq('id', req.params.imageId).select().single()
   if (error) return res.status(500).json({ error: error.message })
+  await logActivity(req.user.id, 'update', 'project_image', req.params.imageId)
   res.json(data)
 })
 
 router.delete('/:id/images/:imageId', authenticate, async (req, res) => {
   const { error } = await supabase.from('project_images').delete().eq('id', req.params.imageId)
   if (error) return res.status(500).json({ error: error.message })
+  await logActivity(req.user.id, 'delete', 'project_image', req.params.imageId)
   res.json({ success: true })
 })
 

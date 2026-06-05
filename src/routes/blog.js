@@ -51,6 +51,7 @@ router.post('/categories', authenticate, async (req, res) => {
   const { name, slug } = req.body
   const { data, error } = await supabase.from('blog_categories').insert({ name, slug }).select().single()
   if (error) return res.status(500).json({ error: error.message })
+  await log(req.user.id, 'create', 'blog_category', data.id)
   res.status(201).json(data)
 })
 
@@ -58,12 +59,14 @@ router.put('/categories/:id', authenticate, async (req, res) => {
   const { name, slug } = req.body
   const { data, error } = await supabase.from('blog_categories').update({ name, slug }).eq('id', req.params.id).select().single()
   if (error) return res.status(500).json({ error: error.message })
+  await log(req.user.id, 'update', 'blog_category', req.params.id)
   res.json(data)
 })
 
 router.delete('/categories/:id', authenticate, async (req, res) => {
   const { error } = await supabase.from('blog_categories').delete().eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
+  await log(req.user.id, 'delete', 'blog_category', req.params.id)
   res.json({ success: true })
 })
 

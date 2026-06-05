@@ -252,6 +252,8 @@ router.post('/bulk', authenticate, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message })
 
+  await logActivity(req.user.id || 'admin', 'create', 'lead', 'bulk-' + batchId)
+
   return res.status(201).json({
     batch_id: batchId,
     saved: Array.isArray(data) ? data.length : dedupedRows.length,
@@ -259,7 +261,23 @@ router.post('/bulk', authenticate, async (req, res) => {
   })
 })
 
-router.get('/', authenticate, async (_req, res) => {
+router.post('/', authenticate, async (req, res) => {
+  try {
+    await ensureLeadsTable()
+  } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
+  const { name, email, phone, type, industry, location, website, linkedin, size, description, status } = req.body
+  if (!name) return res.status(400).json({ error: 'Name is required' })
+  const batchId = randomUUID()
+  const { data, error } = await supabase.from('leads').insert({
+    batch_id: batchId, name, email, phone, type, industry, location, website, linkedin, size, description,
+    status: status || 'new', source: 'manual', created_by: req.user?.id || 'admin',
+  }).select().single()
+  if (error) return res.status(500).json({ error: error.message })
+  await logActivity(req.user.id, 'create', 'lead', data.id)
+  res.status(201).json(data)
+})
   try {
     await ensureLeadsTable()
   } catch (err) {
@@ -288,10 +306,10 @@ router.patch('/:id', authenticate, async (req, res) => {
     return res.status(500).json({ error: err.message })
   }
 
+  const fields = ['name', 'email', 'phone', 'type', 'industry', 'location', 'website', 'linkedin', 'size', 'description', 'status', 'follow_up_date']
   const updates = {}
-  if (req.body?.status !== undefined) updates.status = toText(req.body.status) || 'new'
-  if (req.body?.follow_up_date !== undefined) {
-    updates.follow_up_date = req.body.follow_up_date ? String(req.body.follow_up_date) : null
+  for (const f of fields) {
+    if (req.body[f] !== undefined) updates[f] = req.body[f]
   }
 
   if (Object.keys(updates).length === 0) {
@@ -307,6 +325,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message })
   if (!data) return res.status(404).json({ error: 'Lead not found' })
+  await logActivity(req.user.id, 'update', 'lead', req.params.id)
   return res.json(data)
 })
 
@@ -322,7 +341,12 @@ router.delete('/:id', authenticate, async (req, res) => {
     .update({ deleted: true, deleted_at: new Date().toISOString(), status: 'deleted' })
     .eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
+  await logActivity(req.user.id, 'delete', 'lead', req.params.id)
   return res.json({ success: true })
 })
+
+async function logActivity(userId, action, entityType, entityId) {
+  await supabase.from('activity_log').insert({ user_id: userId, action, entity_type: entityType, entity_id: entityId })
+}
 
 export default router
